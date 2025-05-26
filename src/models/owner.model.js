@@ -44,7 +44,7 @@ const ownerSchema = new mongoose.Schema(
 // handle Password
 ownerSchema.pre("save", async function (next) {
     if(!this.isModified("password")) {
-        return (next)
+        return (next())
     }
 
     this.password = await bcrypt.hash(this.password,10);
@@ -67,7 +67,7 @@ ownerSchema.methods.generateAccessToken = function () {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn:ACCESS_TOKEN_EXPIRY
+            expiresIn:process.env.ACCESS_TOKEN_EXPIRY
         }
     )
 }
