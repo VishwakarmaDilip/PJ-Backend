@@ -38,7 +38,7 @@ const getPublicIdFromURL = (url) => {
     return publicId
 }
 
-//delete
+//Delete
 const deleteFromCloudinary = async (url) => {
     try {
         if (!url) return null
