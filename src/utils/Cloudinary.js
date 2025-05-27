@@ -10,12 +10,13 @@ cloudinary.config({
 });
 
 // Upload
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath,isProduct=false) => {
     try {        
         if (!localFilePath) return null;
         
         // upload image to cloudinary    
         const response = await cloudinary.uploader.upload(localFilePath, {
+            folder:`${isProduct ? "products/image": "userImage"}`,
             resource_type: 'image',
         })
 
@@ -31,11 +32,19 @@ const uploadOnCloudinary = async (localFilePath) => {
 
 // extract public id
 const getPublicIdFromURL = (url) => {
-    const parts = url.split("/")
-    const fileName = parts.pop()
-    const publicId = fileName.split(".")[0]
-
-    return publicId
+    try {
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split("/");
+        const versionIndex = pathParts.findIndex(part => /^v\d+$/.test(part));
+        const filePathParts = pathParts.slice(versionIndex + 1);
+        const filePath = filePathParts.join("/");
+        const dotIndex = filePath.lastIndexOf(".");
+        const publicId = filePath.substring(0,dotIndex)
+    
+        return publicId
+    } catch (error) {
+        return null
+    }
 }
 
 //Delete

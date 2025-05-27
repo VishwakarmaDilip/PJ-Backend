@@ -4,7 +4,7 @@ const { Product } = require("../models/product.model")
 const { ApiError } = require("../utils/ApiError")
 const { ApiResponse } = require("../utils/ApiResponse")
 const asyncHandler = require("../utils/AsyncHandler")
-const { uploadOnCloudinary } = require("../utils/Cloudinary")
+const { uploadOnCloudinary, deleteFromCloudinary } = require("../utils/Cloudinary")
 
 
 

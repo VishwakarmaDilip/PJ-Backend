@@ -2,9 +2,10 @@ const mongoose = require('mongoose')
 
 const productSchema = new mongoose.Schema(
     {
-        PID: {
+        productId: {
             type:String,
-            required:true
+            required:true,
+            unique:true
         },
         productName: {
             type: String,
