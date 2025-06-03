@@ -33,27 +33,13 @@ const userSchema = new mongoose.Schema(
         },
         address: [
             {
-                address: {
-                    type: String
-                },
-                area: {
-                    type: String
-                },
-                city: {
-                    type: String
-                },
-                pinCode: {
-                    type: Number
-                },
-                state: {
-                    type: String
-                }
-
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Address"
             },
         ],
         orders: [
             {
-                type:mongoose.Schema.Types.ObjectId,
+                type: mongoose.Schema.Types.ObjectId,
                 ref: "Order"
             }
         ],
@@ -103,9 +89,9 @@ userSchema.methods.generateAccessToken = function () {
             fullName: this.fullName,
             username: this.username
         },
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.ACCESS_TOKEN_SECRET_USER,
         {
-            expiresIn: ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY_USER
         }
     )
 }
@@ -115,9 +101,9 @@ userSchema.methods.generateRefreshToken = function () {
         {
             _id: this._id
         },
-        process.env.REFRESH_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET_USER,
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY_USER
         }
     )
 }

@@ -27,10 +27,12 @@ app.use(cookieParser())
 // Imports Routes
 const ownerRouter = require('./routes/owner.routes')
 const productRouter = require('./routes/product.routes')
+const userRouter = require('./routes/user.route')
 
 // Routes Declaration
 app.use("/api/v1/owner", ownerRouter)
 app.use("/api/v1/product", productRouter )
+app.use("/api/v1/user", userRouter)
 
 
 module.exports = app

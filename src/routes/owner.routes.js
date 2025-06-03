@@ -1,5 +1,14 @@
 const { Router } = require('express')
-const { registerOwner, loginOwner, logoutOwner, changeCurrentPassword, updateAcountDetail, updateAvatar } = require('../controllers/owner.controller')
+const {
+    registerOwner,
+    loginOwner,
+    logoutOwner,
+    changeCurrentPassword,
+    updateAcountDetail,
+    updateAvatar,
+    getAllCustomers,
+    getCustomerDetail
+} = require('../controllers/owner.controller')
 const { upload } = require('../middlewares/multer.middleware')
 const { verifyJWT } = require('../middlewares/auth.middleware')
 
@@ -14,7 +23,9 @@ router.route("/login").post(loginOwner)
 router.route("/logout").post(verifyJWT, logoutOwner)
 router.route("/changeCurrentPassword").patch(verifyJWT, changeCurrentPassword)
 router.route("/updateAcountDetail").patch(verifyJWT, updateAcountDetail)
-router.route("/updateAvatar").patch(verifyJWT, upload.single("avatar"),updateAvatar)
+router.route("/updateAvatar").patch(verifyJWT, upload.single("avatar"), updateAvatar)
+router.route("/getAllCustomers").get(verifyJWT, getAllCustomers)
+router.route("/getCustomer/:customerId").get(verifyJWT,getCustomerDetail)
 
 
 

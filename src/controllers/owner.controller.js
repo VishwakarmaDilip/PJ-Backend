@@ -1,6 +1,5 @@
-const { Category } = require("../models/category.model")
 const { Owner } = require("../models/owner.model")
-const { Product } = require("../models/product.model")
+const { User } = require("../models/user.model")
 const { ApiError } = require("../utils/ApiError")
 const { ApiResponse } = require("../utils/ApiResponse")
 const asyncHandler = require("../utils/AsyncHandler")
@@ -258,6 +257,66 @@ const updateAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, malik, "User detail updated successfully"))
 })
 
+const getAllCustomers = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 3, query, sortBy, sortType } = req.query
+
+    const pageNumber = parseInt(page, 10)
+    const limitNumber = parseInt(limit, 10)
+    const skip = (pageNumber - 1) * limitNumber
+
+    const sortOrder = sortType === "descending" ? -1 : 1
+
+    const queryObject = {}
+    if (query) {
+        queryObject.$or = [
+            { username: { $regex: query, $options: "i" } },
+            { fullName: { $regex: query, $options: "i" } },
+            { mobile: { $regex: query, $options: "i" } },
+            { email: { $regex: query, $options: "i" } },
+        ]
+    }
+
+    const totalCustomers = await User.countDocuments(queryObject)
+    const fetchedCustomers = await User.aggregate([
+        { $match: queryObject },
+        {
+            $sort: { [sortBy]: sortOrder }
+        },
+        { $skip: skip },
+        { $limit: limitNumber },
+        {$unset: ["password", "refreshToken"]}
+    ])
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                fetchedCustomers,
+                "page": pageNumber,
+                "limit": limitNumber,
+                totalCustomers,
+                "totalPages": Math.ceil(totalCustomers / limitNumber)
+            }
+        )
+    )
+})
+
+const getCustomerDetail = asyncHandler(async (req, res) => {
+    const { customerId } = req.params
+
+    if (!customerId) {
+        throw new ApiError(406, "Customer Id is required")
+    }
+
+    const customer = await User.findById(customerId).select("-password -refreshToken")
+
+    if (!customer) {
+        throw new ApiError(404, "Customer not found")
+    }
+
+    return res.status(200).json(new ApiResponse(200, customer, "Customer detail fetched successfully"))
+})
+
 
 module.exports = {
     registerOwner,
@@ -266,4 +325,6 @@ module.exports = {
     changeCurrentPassword,
     updateAcountDetail,
     updateAvatar,
+    getAllCustomers,
+    getCustomerDetail,
 }
