@@ -11,7 +11,7 @@ router.route("/createProduct").post(upload.array("image", 4), createProduct)
 router.route("/updateProduct/:productId").patch(updateProduct)
 router.route("/getProducts").get(getAllProducts)
 router.route("/getProduct/:product_id").get(getProduct)
-router.route("/deleteProduct").delete(deleteProduct)
+router.route("/deleteProduct/:product_id").delete(deleteProduct)
 
 router.route("/category/createCategory").post(createCategory)
 router.route("/category/getCategories").get(getCategory)

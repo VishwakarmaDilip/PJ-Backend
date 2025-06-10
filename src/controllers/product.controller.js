@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose")
 const { Category } = require("../models/category.model")
 const { Counter } = require("../models/counter.model")
 const { Product } = require("../models/product.model")
@@ -138,18 +139,12 @@ const deleteCategory = asyncHandler(async (req, res) => {
 })
 
 const deleteProduct = asyncHandler(async (req, res) => {
-    const { productId } = req.body
-    if (!productId) {
-        throw new ApiError(500, "something went wrong")
+    const { product_id } = req.params
+    if (!product_id) {
+        throw new ApiError(406, "Product ID is required")
     }
+    const deletedProduct = await Product.findByIdAndDelete(product_id)
 
-    const product = await Product.findOne({ productId })
-
-    if (!product) {
-        throw new ApiError(404, "No Product found")
-    }
-
-    const deletedProduct = await Product.findByIdAndDelete(product._id)
     deletedProduct.image.forEach(async (img) => {
         await deleteFromCloudinary(img)
     })
@@ -208,7 +203,7 @@ const updateProduct = asyncHandler(async (req, res) => {
 })
 
 const getAllProducts = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 3, query, sortBy, sortType } = req.query
+    const { page = 1, limit = 10, query, sortBy, sortType } = req.query
 
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
@@ -232,7 +227,22 @@ const getAllProducts = asyncHandler(async (req, res) => {
             $sort: { [sortBy]: sortOrder }
         },
         { $skip: skip },
-        { $limit: limitNumber }
+        { $limit: limitNumber },
+        {
+            $lookup: {
+                from: "categories",
+                localField: "category",
+                foreignField: "_id",
+                as: "category",
+                pipeline: [
+                    {
+                        $project: {
+                            categoryName: 1,
+                        }
+                    }
+                ]
+            }
+        }
     ])
 
     return res.status(200).json(
@@ -256,11 +266,45 @@ const getProduct = asyncHandler(async (req, res) => {
         throw new ApiError(403, "product Id required")
     }
 
-    const product = await Product.findById(product_id)
+    const product = await Product.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(product_id)
+            }
+        },
+        {
+            $lookup: {
+                from: "categories",
+                localField: "category",
+                foreignField: "_id",
+                as: "category",
+                pipeline: [
+                    {
+                        $project: {
+                            categoryName: 1,
+                            _id: -1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: "$category"
+        },
+        {
+            $unset: [
+                "createdAt",
+                "updatedAt",
+                "__v",
+            ]
+
+        }
+    ])
 
     if (!product) {
         throw new ApiError(404, "Product Not Found")
     }
+
 
     return res.status(200).json(
         new ApiResponse(
