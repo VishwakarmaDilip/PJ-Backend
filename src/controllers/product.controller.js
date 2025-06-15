@@ -8,9 +8,6 @@ const asyncHandler = require("../utils/AsyncHandler")
 const { uploadOnCloudinary, deleteFromCloudinary } = require("../utils/Cloudinary")
 
 
-
-
-
 const createProduct = asyncHandler(async (req, res) => {
     const { productName, description, price, quantity, category } = req.body
     const imageLocalPath = req?.files
@@ -161,37 +158,67 @@ const deleteProduct = asyncHandler(async (req, res) => {
 })
 
 const updateProduct = asyncHandler(async (req, res) => {
-    const { productName, description, price, category } = req.body
+    const { productName, description, price, category, quantity, previousImages } = req.body
     const { productId } = req.params
+    const imageLocalPath = req?.files
 
-    if ([productName, description, price, category].some((feild) => {
+    if ([productName, description, price, category, quantity, previousImages]?.some((feild) => {
         return feild?.trim() === ""
     })) {
         throw new ApiError(406, "All fields required")
     }
 
-    let productCategory = await Category.findOne({ categoryName: category })
 
+    const prevImg = previousImages?.split(",")?.filter((img) => img[0] === "h")
+
+    const product = await Product.findById(productId)
+    if (!product) {
+        throw new ApiError(404, "Product Not Found")
+    }
+
+    const imagesToDelete = product.image.filter((img) => {
+        return !prevImg.includes(img)
+    })
+
+
+    let image = []
+    if (imageLocalPath) {
+        image = await Promise.all(imageLocalPath.map(async (img) => {
+            let imglocalpath = img.path
+            return await uploadOnCloudinary(imglocalpath, true)
+        }))
+
+        if (!image) {
+            throw new ApiError(406, "Something went wrong while uploading the image")
+        }
+    }
+
+    let productCategory = await Category.findById(category)
 
     if (!productCategory) {
         throw new ApiError(404, "Category Not found")
     }
 
+    product.image = [...prevImg, ...image]
+    product.productName = productName
+    product.description = description
+    product.price = price
+    product.category = productCategory
+    product.quantity = quantity
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-        productId,
-        {
-            productName,
-            description,
-            price,
-            category: productCategory
-        },
-        { new: true }
-    )
+    await product.save()
+
+    const updatedProduct = await Product?.findOne({ productName })
 
     if (!updatedProduct) {
         throw new ApiError(506, "Something went wrong while Updating Product")
     }
+
+    await Promise.all(
+        imagesToDelete?.map(async (img) => {
+            return await deleteFromCloudinary(img)
+        })
+    )
 
 
 
@@ -208,7 +235,7 @@ const updateProduct = asyncHandler(async (req, res) => {
 
 const getAllProducts = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy = "createdAt", sortType } = req.query
-    
+
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
     const skip = (pageNumber - 1) * limitNumber
@@ -320,6 +347,7 @@ const getProduct = asyncHandler(async (req, res) => {
         )
     )
 })
+
 
 module.exports = {
     createProduct,

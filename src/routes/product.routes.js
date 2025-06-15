@@ -8,7 +8,7 @@ const router = Router()
 router.use(verifyJWT)
 
 router.route("/createProduct").post(upload.array("images", 4), createProduct)
-router.route("/updateProduct/:productId").patch(updateProduct)
+router.route("/updateProduct/:productId").patch(upload.array("images",4),updateProduct)
 router.route("/getProducts").get(getAllProducts)
 router.route("/getProduct/:product_id").get(getProduct)
 router.route("/deleteProduct/:product_id").delete(deleteProduct)
