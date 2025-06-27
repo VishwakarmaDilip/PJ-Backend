@@ -8,13 +8,20 @@ const { ApiError } = require('../utils/ApiError')
 
 exports.verifyJWT = asyncHandler(async (req, _, next) => {
     try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")      
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
 
         if (!token) {
             throw new ApiError(401, "Unauthorized Request")
         }
 
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        let decodedToken;
+
+        try {
+            decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        } catch (error) {
+            decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_USER)
+        }
+
 
         const user = await User.findById(decodedToken._id).select("-password -refreshToken")
 
@@ -23,6 +30,8 @@ exports.verifyJWT = asyncHandler(async (req, _, next) => {
         if (!user && !owner) {
             throw new ApiError(401, "Invalid access Token")
         }
+
+
 
         if (user) {
             req.user = user

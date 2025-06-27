@@ -1,4 +1,7 @@
+const { default: mongoose } = require("mongoose")
 const { Address } = require("../models/address.model")
+const { Cart } = require("../models/cart.model")
+const { Product } = require("../models/product.model")
 const { User } = require("../models/user.model")
 const { ApiError } = require("../utils/ApiError")
 const { ApiResponse } = require("../utils/ApiResponse")
@@ -25,6 +28,8 @@ const generateAccessAndRefreshToken = async (userId) => {
     }
 }
 
+
+// user account related controllers
 const registerUser = asyncHandler(async (req, res) => {
     // get user detail    
     const { fullName, email, username, password } = req.body
@@ -263,8 +268,7 @@ const getUserDetail = asyncHandler(async (req, res) => {
 })
 
 
-
-
+// address related controllers
 const createAddress = asyncHandler(async (req, res) => {
     const { address, area, city, pinCode, state } = req.body
 
@@ -324,12 +328,12 @@ const getAllAddress = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                    _id: "$addressDetail._id",
-                    address: "$addressDetail.address",
-                    area: "$addressDetail.area",
-                    city: "$addressDetail.city",
-                    pinCode: "$addressDetail.pinCode",
-                    state: "$addressDetail.state"
+                _id: "$addressDetail._id",
+                address: "$addressDetail.address",
+                area: "$addressDetail.area",
+                city: "$addressDetail.city",
+                pinCode: "$addressDetail.pinCode",
+                state: "$addressDetail.state"
             }
         }
     ])
@@ -340,7 +344,7 @@ const getAllAddress = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, {user, AllAddress}, "Addresses fetched successfully"))
+        .json(new ApiResponse(200, { user, AllAddress }, "Addresses fetched successfully"))
 
 })
 
@@ -350,7 +354,7 @@ const getAddress = asyncHandler(async (req, res) => {
     if (!addressId) {
         throw new ApiError(406, "Address ID is required")
     }
-    
+
     const address = await Address.findById(addressId)
     if (!address) {
         throw new ApiError(404, "Address not found")
@@ -413,7 +417,105 @@ const deleteAddress = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, address, "Address deleted successfully"))
 })
- 
+
+
+// cart related controllers
+const createOrUpdateCart = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("-password -refreshToken")
+    const { productId, quantity = 1 } = req.body
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+
+    const product = await Product.findById(productId)
+    if (!product) {
+        throw new ApiError(404, "Product not found")
+    }
+
+    const productPrice = product.price
+    const totalPrice = productPrice * (quantity || 1)
+
+
+    // check if user already has a cart
+    let cart
+    if (user.cart && user.cart !== "") {
+
+        const userCart = await Cart.findById(user.cart._id)
+        const productInCart = userCart.products.filter(prod => prod.product.toString() == productId)
+
+        if (productInCart.length > 0) {
+            await Cart.updateOne(
+                { "products._id": new mongoose.Types.ObjectId(productInCart[0]._id) },
+                {
+                    $set: {
+                        "products.$.quantity": quantity,
+                        "products.$.amount": totalPrice
+                    }
+                },
+            )
+
+            const newCart = await Cart.findById(user.cart._id)
+
+            newCart.totalAmount = newCart.products.reduce((sum, item) => sum + item.amount, 0)
+
+
+            await newCart.save()
+
+            cart = await Cart.findById(user.cart._id)
+        } else {
+            cart = await Cart.findByIdAndUpdate(
+                user.cart,
+                {
+                    $push: {
+                        products: {
+                            product: productId,
+                            quantity: quantity || 1,
+                            amount: totalPrice
+                        }
+                    },
+                    $set: {
+                        totalAmount: await Cart.findById(user.cart).then(cart => cart.totalAmount + (totalPrice))
+                    }
+                },
+                { new: true }
+            )
+        }
+
+    } else {
+        // create a new cart
+
+        cart = await Cart.create({
+            user: user._id,
+            products: [{
+                product: productId,
+                quantity: quantity || 1,
+                amount: totalPrice
+            }],
+            totalAmount: totalPrice
+        })
+
+        if (!cart) {
+            throw new ApiError(500, "Something went wrong while creating the cart")
+        }
+
+        // update user with new cart
+        await User.findByIdAndUpdate(
+            user._id,
+            {
+                $set: {
+                    cart: cart._id
+                }
+            },
+            { new: true }
+        )
+    }
+
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, cart, "Cart created successfully"))
+})
+
 
 module.exports = {
     registerUser,
@@ -423,9 +525,12 @@ module.exports = {
     updateAccountDetail,
     updateAvatar,
     getUserDetail,
+
     createAddress,
     getAllAddress,
     getAddress,
     updateAddress,
-    deleteAddress
+    deleteAddress,
+
+    createOrUpdateCart
 }

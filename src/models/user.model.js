@@ -49,12 +49,10 @@ const userSchema = new mongoose.Schema(
                 ref: "Product"
             }
         ],
-        cart: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Product"
-            }
-        ],
+        cart: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Cart"
+        },
         password: {
             type: String,
             required: [true, "Password is required"],

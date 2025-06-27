@@ -12,15 +12,20 @@ const {
     getAddress,
     updateAddress,
     deleteAddress,
-    getUserDetail
+    getUserDetail,
+    createOrUpdateCart
 } = require("../controllers/user.controller");
 const { upload } = require("../middlewares/multer.middleware");
+const { getAllProducts, getProduct, getCategory } = require("../controllers/product.controller");
 
 
 const router = Router()
 
 router.route("/register").post(registerUser)
 router.route("/login").post(loginUser)
+router.route("/getProducts").get(getAllProducts)
+router.route("/getProduct/:product_id").get(getProduct)
+router.route("/category/getCategories").get(getCategory)
 
 // secure routes
 router.use(verifyJWT)
@@ -31,11 +36,15 @@ router.route("/updateAccount").patch(updateAccountDetail)
 router.route("/updateAvatar").patch(upload.single("avatar"), updateAvatar)
 router.route("/getUser").get(getUserDetail)
 
+// Address routes
 router.route("/address/createAddress").post(createAddress)
 router.route("/address/getAllAddress").get(getAllAddress)
 router.route("/address/:addressId").get(getAddress)
 router.route("/address/update/:addressId").post(updateAddress)
 router.route("/address/delete/:addressId").delete(deleteAddress)
+
+// Cart and Wishlist routes
+router.route("/cart/addToCart").post(createOrUpdateCart)
 
 
 

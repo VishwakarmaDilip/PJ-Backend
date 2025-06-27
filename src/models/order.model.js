@@ -30,7 +30,7 @@ const orderSchema = new mongoose.Schema(
         },
         status:{
             type:String,
-            enum: [Placed, Shipping, Delivered, Cancelled],
+            enum: ["Placed", "Shipping", "Delivered", "Cancelled"],
             default:"Placed"
         },
         trackingId: {
@@ -38,11 +38,11 @@ const orderSchema = new mongoose.Schema(
         },
         paymentStatus: {
             type: String,
-            enum:[paid,unpaid]
+            enum:["paid","unpaid"]
         },
         paymentType: {
             type:String,
-            enum:[netBanking,UPI,COD]
+            enum:["netBanking","UPI","COD"]
         },
         paymentTransactionId: {
             type: String

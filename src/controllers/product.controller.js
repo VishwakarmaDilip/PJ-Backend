@@ -9,7 +9,7 @@ const { uploadOnCloudinary, deleteFromCloudinary } = require("../utils/Cloudinar
 
 
 const createProduct = asyncHandler(async (req, res) => {
-    const { productName, description, price, quantity, category } = req.body
+    const { productName, description, price, quantity, category, discount } = req.body
     const imageLocalPath = req?.files
 
     if (!imageLocalPath || imageLocalPath.length === 0) {
@@ -17,7 +17,7 @@ const createProduct = asyncHandler(async (req, res) => {
 
     }
 
-    if (!productName || !description || !price || !quantity || !category || !imageLocalPath) {
+    if (!productName || !description || !price || !quantity || !category) {
         throw new ApiError(406, "All fields Required")
     }
 
@@ -57,7 +57,8 @@ const createProduct = asyncHandler(async (req, res) => {
             image,
             price,
             quantity,
-            category
+            category,
+            discount: discount || 0
         }
     )
 
@@ -158,11 +159,11 @@ const deleteProduct = asyncHandler(async (req, res) => {
 })
 
 const updateProduct = asyncHandler(async (req, res) => {
-    const { productName, description, price, category, quantity, previousImages } = req.body
+    const { productName, description, price, category, quantity, previousImages, discount} = req.body
     const { productId } = req.params
     const imageLocalPath = req?.files
 
-    if ([productName, description, price, category, quantity, previousImages]?.some((feild) => {
+    if ([productName, description, price, category, quantity, discount]?.some((feild) => {
         return feild?.trim() === ""
     })) {
         throw new ApiError(406, "All fields required")
@@ -205,6 +206,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.price = price
     product.category = productCategory
     product.quantity = quantity
+    product.discount = discount || 0
 
     await product.save()
 
@@ -234,7 +236,7 @@ const updateProduct = asyncHandler(async (req, res) => {
 })
 
 const getAllProducts = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy = "createdAt", sortType } = req.query
+    const { page = 1, limit = 10, query, sortBy, sortType, category  } = req.query
 
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
@@ -249,6 +251,10 @@ const getAllProducts = asyncHandler(async (req, res) => {
             { productName: { $regex: query, $options: "i" } },
             { description: { $regex: query, $options: "i" } },
         ]
+    }
+
+    if (category){
+        queryObject.category = new mongoose.Types.ObjectId(category)
     }
 
     const totalProduct = await Product.countDocuments(queryObject)
