@@ -428,6 +428,7 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
     }
 
     const product = await Product.findById(productId)
+    
     if (!product) {
         throw new ApiError(404, "Product not found")
     }
@@ -485,7 +486,7 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
         // create a new cart
 
         cart = await Cart.create({
-            user: user._id,
+            customer: user._id,
             products: [{
                 product: productId,
                 quantity: quantity || 1,
@@ -516,6 +517,85 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, cart, "Cart created successfully"))
 })
 
+const getCart = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id)
+
+    if (!user) {
+        throw new ApiError(404, "User Not found")
+    }
+
+    const cart = await Cart.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(user.cart)
+            }
+        },
+        {
+            $unwind: "$products"
+        },
+        {
+            $lookup: {
+                from: "products",
+                localField: "products.product",
+                foreignField: "_id",
+                as: "productDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            productId: 1,
+                            productName: 1,
+                            image: 1,
+                            price: 1,
+                            category: 1,
+                        }
+                    },
+                ]
+            }
+        },
+        {
+            $unwind: "$productDetails"
+        },
+        {
+            $project: {
+                _id:1,
+                totalAmount: 1,
+                product: {
+                    $mergeObjects: [
+                        "$productDetails",
+                        {
+                            quantity: "$products.quantity",
+                            amount:"$products.amount"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            $group: {
+                _id:"$_id",
+                totalAmount: {$first: "$totalAmount"},
+                products:{$push: "$product"}
+            }
+        },
+    ])
+
+    if (!cart) {
+        throw new ApiError(404, "Cart Not Found")
+    }
+
+    // console.log(cart);
+
+    return res.status(200)
+        .json(new ApiResponse(
+            201,
+            cart,
+            "cart fetched successfully"
+        ))
+
+
+
+})
+
 
 module.exports = {
     registerUser,
@@ -532,5 +612,6 @@ module.exports = {
     updateAddress,
     deleteAddress,
 
-    createOrUpdateCart
+    createOrUpdateCart,
+    getCart
 }

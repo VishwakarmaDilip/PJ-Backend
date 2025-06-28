@@ -13,7 +13,8 @@ const {
     updateAddress,
     deleteAddress,
     getUserDetail,
-    createOrUpdateCart
+    createOrUpdateCart,
+    getCart
 } = require("../controllers/user.controller");
 const { upload } = require("../middlewares/multer.middleware");
 const { getAllProducts, getProduct, getCategory } = require("../controllers/product.controller");
@@ -45,6 +46,7 @@ router.route("/address/delete/:addressId").delete(deleteAddress)
 
 // Cart and Wishlist routes
 router.route("/cart/addToCart").post(createOrUpdateCart)
+router.route("/cart/getCart").get(getCart)
 
 
 
