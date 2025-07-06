@@ -421,14 +421,14 @@ const deleteAddress = asyncHandler(async (req, res) => {
 
 // cart related controllers
 const createOrUpdateCart = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id).select("-password -refreshToken")
+    const user = await User.findById(req.user._id)?.select("-password -refreshToken")
     const { productId, quantity = 1 } = req.body
     if (!user) {
         throw new ApiError(404, "User not found")
     }
 
     const product = await Product.findById(productId)
-    
+
     if (!product) {
         throw new ApiError(404, "Product not found")
     }
@@ -450,14 +450,14 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
                 {
                     $set: {
                         "products.$.quantity": quantity,
-                        "products.$.amount": totalPrice
+                        "products.$.totalAmount": totalPrice
                     }
                 },
             )
 
             const newCart = await Cart.findById(user.cart._id)
 
-            newCart.totalAmount = newCart.products.reduce((sum, item) => sum + item.amount, 0)
+            newCart.cartValue = newCart.products.reduce((sum, item) => sum + item.totalAmount, 0)
 
 
             await newCart.save()
@@ -471,11 +471,11 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
                         products: {
                             product: productId,
                             quantity: quantity || 1,
-                            amount: totalPrice
+                            totalAmount: totalPrice
                         }
                     },
                     $set: {
-                        totalAmount: await Cart.findById(user.cart).then(cart => cart.totalAmount + (totalPrice))
+                        cartValue: await Cart.findById(user.cart).then(cart => cart.cartValue + (totalPrice))
                     }
                 },
                 { new: true }
@@ -490,9 +490,9 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
             products: [{
                 product: productId,
                 quantity: quantity || 1,
-                amount: totalPrice
+                totalAmount: totalPrice
             }],
-            totalAmount: totalPrice
+            cartValue: totalPrice
         })
 
         if (!cart) {
@@ -522,6 +522,10 @@ const getCart = asyncHandler(async (req, res) => {
 
     if (!user) {
         throw new ApiError(404, "User Not found")
+    }
+
+    if (!user.cart) {
+        throw new ApiError(404, "Cart Not Found")
     }
 
     const cart = await Cart.aggregate([
@@ -557,14 +561,14 @@ const getCart = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                _id:1,
-                totalAmount: 1,
+                _id: 1,
+                cartValue: 1,
                 product: {
                     $mergeObjects: [
                         "$productDetails",
                         {
                             quantity: "$products.quantity",
-                            amount:"$products.amount"
+                            totalAmount: "$products.totalAmount"
                         }
                     ]
                 }
@@ -572,9 +576,9 @@ const getCart = asyncHandler(async (req, res) => {
         },
         {
             $group: {
-                _id:"$_id",
-                totalAmount: {$first: "$totalAmount"},
-                products:{$push: "$product"}
+                _id: "$_id",
+                cartValue: { $first: "$cartValue" },
+                products: { $push: "$product" }
             }
         },
     ])
@@ -596,6 +600,171 @@ const getCart = asyncHandler(async (req, res) => {
 
 })
 
+const updateProductInCart = asyncHandler(async (req, res) => {
+    const { productId, quantity } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (!user.cart) {
+        throw new ApiError(404, "User Don't have cart");
+    }
+
+    const cart = await Cart.findById(user.cart);
+
+    if (!cart) {
+        throw new ApiError(404, "Cart not found");
+    }
+
+    const productIndex = cart.products.findIndex(
+        (item) => item.product.toString() === productId
+    );
+
+    if (productIndex === -1) {
+        throw new ApiError(404, "Product not found in cart");
+    }
+
+    if (quantity <= 0) {
+        // Remove product from cart if quantity is zero or less
+        cart.products.splice(productIndex, 1);
+    } else {
+        // Update quantity and totalAmount
+        const product = await Product.findById(productId);
+        if (!product) {
+            throw new ApiError(404, "Product not found");
+        }
+        cart.products[productIndex].quantity = quantity;
+        cart.products[productIndex].totalAmount = product.price * quantity;
+    }
+
+    // Recalculate cart value
+    cart.cartValue = cart.products.reduce((sum, item) => sum + item.totalAmount, 0);
+
+    await cart.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, cart, "Cart updated successfully"));
+})
+
+const deleteCart = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if (!user.cart) {
+        throw new ApiError(404, "No cart to delete");
+    }
+
+    const cart = await Cart.findByIdAndDelete(user.cart);
+
+    if (!cart) {
+        throw new ApiError(404, "Cart not found");
+    }
+
+    // Remove cart reference from user
+    user.cart = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Cart deleted successfully"));
+})
+
+
+// wishList related controllers
+const addToList = asyncHandler(async (req, res) => {
+    let { productId } = req.body
+    const user = req.user
+    const product = await Product.findById(productId)
+
+    if (!productId) {
+        throw new ApiError(406, "Product Id required...!")
+    }
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+    if (!product) {
+        throw new ApiError(404, "product not found")
+    }
+
+
+    const updatedUser = await User.findByIdAndUpdate(
+        user._id,
+        {
+            $addToSet: {
+                wishList: product._id
+            }
+        },
+        { new: true }
+    )
+
+    if (!updatedUser) {
+        throw new ApiError(501, "somthing went wrong")
+    }
+
+    const wishList = updatedUser.wishList
+
+
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, wishList, "done"))
+})
+
+const getWishList = asyncHandler(async (req, res) => {
+    const user = req?.user
+
+    if (!user) {
+        throw new ApiError(404, "User Not found")
+    }
+
+    const wishList = user.wishList
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            201,
+            wishList,
+            "wish list fetched successfully"
+        ))
+})
+
+const deleteProductfromList = asyncHandler(async (req, res) => {
+    const { productId } = req.body
+    const userId = req.user?._id
+
+    if (!productId) {
+        throw new ApiError(406, "Product Id required..!")
+    }
+
+    const user = await User.findById(userId)
+
+    const indexOfProduct = user.wishList.findIndex((pid) => pid.toString() === productId)
+
+    if(indexOfProduct < 0){
+        throw new ApiError(404, "Product not in list")
+    }
+
+    user.wishList.splice(indexOfProduct,1)
+    const updatedWishList = (await user.save({validateBeforeSave:false})).wishList
+    
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            201,
+            updatedWishList,
+            "A product deleted from list"
+        ))
+
+})
+
+
 
 module.exports = {
     registerUser,
@@ -613,5 +782,11 @@ module.exports = {
     deleteAddress,
 
     createOrUpdateCart,
-    getCart
+    getCart,
+    updateProductInCart,
+    deleteCart,
+
+    addToList,
+    getWishList,
+    deleteProductfromList
 }

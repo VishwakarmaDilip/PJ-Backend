@@ -18,13 +18,13 @@ const cartSchema = new mongoose.Schema({
                 required: true,
                 default: 1
             },
-            amount: {
+            totalAmount: {
                 type: Number,
                 required: true
             },
         }
     ],
-    totalAmount: {
+    cartValue: {
         type: Number,
         required: true,
     }
