@@ -54,7 +54,7 @@ router.route("/cart/addToCart").post(createOrUpdateCart)
 router.route("/cart/getCart").get(getCart)
 router.route("/cart/updateProduct").patch(updateProductInCart)
 router.route("/cart/deleteCart").delete(deleteCart)
-router.route("/wish/addToList").post(addToList)
+router.route("/wish/addToList").patch(addToList)
 router.route("/wish/getWishList").get(getWishList)
 router.route("/wish/upadteWishList").patch(deleteProductfromList)
 

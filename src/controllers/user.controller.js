@@ -423,6 +423,7 @@ const deleteAddress = asyncHandler(async (req, res) => {
 const createOrUpdateCart = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id)?.select("-password -refreshToken")
     const { productId, quantity = 1 } = req.body
+    
     if (!user) {
         throw new ApiError(404, "User not found")
     }
@@ -723,13 +724,43 @@ const getWishList = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User Not found")
     }
 
-    const wishList = user.wishList
+    const wishList = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "products",
+                localField: "wishList",
+                foreignField: "_id",
+                as: "wishList",
+                pipeline: [
+                    {
+                        $project: {
+                            productId: 1,
+                            productName: 1,
+                            image: 1,
+                            price: 1,
+                            category: 1,
+                        }
+                    },
+                ]
+            }
+        },
+        {
+            $project: {
+                wishList: 1
+            }
+        }
+    ])
 
     return res
         .status(200)
         .json(new ApiResponse(
             201,
-            wishList,
+            wishList[0],
             "wish list fetched successfully"
         ))
 })
