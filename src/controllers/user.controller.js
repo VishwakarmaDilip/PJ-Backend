@@ -270,16 +270,21 @@ const getUserDetail = asyncHandler(async (req, res) => {
 
 // address related controllers
 const createAddress = asyncHandler(async (req, res) => {
-    const { address, area, city, pinCode, state } = req.body
+    const {name, lastName, mobile, address, landmark, city, pinCode, state } = req.body
 
-    if (!address || !area || !city || !pinCode || !state) {
+    if (!name || !lastName ||!mobile || !address || !city || !pinCode || !state) {
         throw new ApiError(406, "All feilds are required")
     }
 
     const newAddress = await Address.create({
         customer: req.user._id,
+        receiver:{
+            firstName: name,
+            lastName,
+            mobile
+        },
         address,
-        area,
+        landmark,
         city,
         pinCode,
         state
@@ -329,8 +334,11 @@ const getAllAddress = asyncHandler(async (req, res) => {
         {
             $project: {
                 _id: "$addressDetail._id",
+                firstName: "$addressDetail.receiver.firstName",
+                lastName: "$addressDetail.receiver.lastName",
+                mobile: "$addressDetail.receiver.mobile",
                 address: "$addressDetail.address",
-                area: "$addressDetail.area",
+                landmark: "$addressDetail.landmark",
                 city: "$addressDetail.city",
                 pinCode: "$addressDetail.pinCode",
                 state: "$addressDetail.state"
@@ -344,23 +352,37 @@ const getAllAddress = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { user, AllAddress }, "Addresses fetched successfully"))
+        .json(new ApiResponse(200, AllAddress , "Addresses fetched successfully"))
 
 })
 
 const getAddress = asyncHandler(async (req, res) => {
     const { addressId } = req.params
 
+
     if (!addressId) {
         throw new ApiError(406, "Address ID is required")
     }
 
-    const address = await Address.findById(addressId)
+    const address = await Address.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(addressId) } },
+        { $unwind: "$receiver"},
+        { $project: {
+            _id: 1,
+            firstName: "$receiver.firstName",
+            lastName: "$receiver.lastName",
+            mobile: "$receiver.mobile",
+            address: 1,
+            landmark: 1,
+            city: 1,
+            pinCode: 1,
+            state: 1
+        } }
+    ])
+
+    
     if (!address) {
         throw new ApiError(404, "Address not found")
-    }
-    if (address.customer.toString() !== req.user._id.toString()) {
-        throw new ApiError(403, "You are not authorized to access this address")
     }
 
     return res
@@ -423,6 +445,7 @@ const deleteAddress = asyncHandler(async (req, res) => {
 const createOrUpdateCart = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id)?.select("-password -refreshToken")
     const { productId, quantity = 1 } = req.body
+
     
     if (!user) {
         throw new ApiError(404, "User not found")
@@ -437,13 +460,14 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
     const productPrice = product.price
     const totalPrice = productPrice * (quantity || 1)
 
-
     // check if user already has a cart
     let cart
     if (user.cart && user.cart !== "") {
 
+        
         const userCart = await Cart.findById(user.cart._id)
         const productInCart = userCart.products.filter(prod => prod.product.toString() == productId)
+        
 
         if (productInCart.length > 0) {
             await Cart.updateOne(
@@ -668,7 +692,7 @@ const deleteCart = asyncHandler(async (req, res) => {
     }
 
     // Remove cart reference from user
-    user.cart = undefined;
+    user.cart = [];
     await user.save({ validateBeforeSave: false });
 
     return res

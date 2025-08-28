@@ -23,6 +23,7 @@ const {
 } = require("../controllers/user.controller");
 const { upload } = require("../middlewares/multer.middleware");
 const { getAllProducts, getProduct, getCategory } = require("../controllers/product.controller");
+const { pincodeServiceability, pincodeServiceabilityAllPinCode } = require("../controllers/delhivery.controller");
 
 
 const router = Router()
@@ -48,6 +49,9 @@ router.route("/address/getAllAddress").get(getAllAddress)
 router.route("/address/:addressId").get(getAddress)
 router.route("/address/update/:addressId").post(updateAddress)
 router.route("/address/delete/:addressId").delete(deleteAddress)
+router.route("/address/delivery/:pinCode").get(pincodeServiceability)
+router.route("/address/deliveryforAllPincode/:pinCode").get(pincodeServiceabilityAllPinCode)
+
 
 // Cart and Wishlist routes
 router.route("/cart/addToCart").post(createOrUpdateCart)

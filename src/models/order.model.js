@@ -2,52 +2,90 @@ const mongoose = require('mongoose')
 
 const orderSchema = new mongoose.Schema(
     {
-        orderId: Number,
-        products:[
-            {
-                type:mongoose.Schema.Types.ObjectId,
-                ref:"Product"
-            }
-        ],
-        customer: {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"User"
+        orderId: {
+            type: String,
+            unique: true,
+            required: true
         },
-        totalAmount: {
-            type:Number
+        products: {
+            type: Array,
+            required: true
+        },
+        customer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        address: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Address"
+        },
+        tempAddress: {
+            firstName: {
+                type: String,
+                trim: true
+            },
+            lastName: {
+                type: String,
+                trim: true
+            },
+            mobile: {
+                type: Number,
+                min: 1000000000,
+            },
+            address: {
+                type: String,
+                trim: true
+            },
+            landmark: {
+                type: String,
+                trim: true
+            },
+            city: {
+                type: String,
+                trim: true
+            },
+            pinCode: {
+                type: Number,
+                min: 100000,
+                max: 999999
+            },
+            state: {
+                type: String,
+                trim: true
+            }
         },
         discountAmount: {
-            type:Number
+            type: Number
         },
         grossAmount: {
-            type:Number
+            type: Number
         },
         shippingAmount: {
-            type:Number
+            type: Number
         },
         netAmount: {
-            type:Number
+            type: Number
         },
-        status:{
-            type:String,
+        status: {
+            type: String,
             enum: ["Placed", "Shipping", "Delivered", "Cancelled"],
-            default:"Placed"
+            default: "Placed"
         },
         trackingId: {
-            type:String
+            type: String
         },
         paymentStatus: {
             type: String,
-            enum:["paid","unpaid"]
+            enum: ["paid", "unpaid"]
         },
         paymentType: {
-            type:String,
-            enum:["netBanking","UPI","COD"]
+            type: String,
+            enum: ["netBanking", "UPI", "POD"]
         },
         paymentTransactionId: {
             type: String
         }
-    },{timestamps:true}
+    }, { timestamps: true }
 )
 
 

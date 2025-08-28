@@ -9,27 +9,49 @@ const addressSchema = mongoose.Schema(
             ref: "User",
             required: true
         },
+        receiver: {
+            firstName: {
+                type: String,
+                required: true,
+                trim: true
+            },
+            lastName: {
+                type: String,
+                required: true,
+                trim: true
+            },
+            mobile: {
+                type: Number,
+                required: true,
+                min: 1000000000,
+            }
+        },
         address: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
-        area: {
+        landmark: {
             type: String,
-            required: true
+            trim: true
         },
         city: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
         pinCode: {
             type: Number,
-            required: true
+            required: true,
+            min: 100000,
+            max: 999999
         },
         state: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         }
-    },{ timestamps: true }
+    }, { timestamps: true }
 )
 
 module.exports.Address = mongoose.model("Address", addressSchema);
