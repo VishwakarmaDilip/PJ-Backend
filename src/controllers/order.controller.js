@@ -15,10 +15,10 @@ const createOrder = asyncHandler(async (req, res) => {
     const user = req.user
 
     if (!deliveryData, !cartId, !paymentType) {
-        throw new ApiError(406, "all feild required")
+        throw new ApiError(400, "all feild required")
     }
     if (!user) {
-        throw new ApiError(407, "Unauthorised user")
+        throw new ApiError(401, "Unauthorised user")
     }
 
     const cart = await Cart.findById(cartId)
@@ -56,7 +56,7 @@ const createOrder = asyncHandler(async (req, res) => {
     )
 
     if (!order) {
-        throw new ApiError(401, "Unable to create order")
+        throw new ApiError(500, "Unable to create order")
     }
 
     if (address) {
@@ -69,7 +69,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
     const consumer = await User.findById(user._id)
     if (!consumer) {
-        throw new ApiError(405, "user not found")
+        throw new ApiError(404, "user not found")
     }
 
     cart.products = []
@@ -80,13 +80,16 @@ const createOrder = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(
-            new ApiResponse(200, "deliveryData", "xyz")
+            new ApiResponse(200, order, "Order Created Successfully")
         )
 })
+
+
 
 // for owner
 const getAllOrders = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "descending" } = req.query
+    const user = req.owner
 
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
@@ -103,6 +106,10 @@ const getAllOrders = asyncHandler(async (req, res) => {
             { "customer.lastName": { $regex: query, $options: "i" } },
             { "customer.mobile": { $regex: query, $options: "i" } },
         ]
+    }
+
+    if (mongoose.Types.ObjectId.isValid(query)) {
+        queryObject.$or.push({ "customer._id": new mongoose.Types.ObjectId(query) });
     }
 
     const fetchedOrders = await Order.aggregate([
@@ -176,6 +183,156 @@ const getAllOrders = asyncHandler(async (req, res) => {
     )
 })
 
+const getRevenueAndOrders = asyncHandler(async (req, res) => {
+    const timezone = "Asia/Kolkata"
+
+    const result = await Order.aggregate([
+        {
+            $facet: {
+                today: [
+                    {
+                        $match: {
+                            status: { $ne: "Cancelled" },
+                            $expr: {
+                                $and: [
+                                    {
+                                        $gte: [
+                                            "$createdAt",
+                                            { $dateTrunc: { date: "$$NOW", unit: "day", timezone } }
+                                        ]
+                                    },
+                                    {
+                                        $lt: [
+                                            "$createdAt",
+                                            {
+                                                $dateAdd: {
+                                                    startDate: { $dateTrunc: { date: "$$NOW", unit: "day", timezone } },
+                                                    unit: "day",
+                                                    amount: 1
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    { $group: { _id: null, revenue: { $sum: "$netAmount" }, orders: { $sum: 1 } } }
+                ],
+
+
+                yesterday: [
+                    {
+                        $match: {
+                            status: { $ne: "Cancelled" },
+                            $expr: {
+                                $and: [
+                                    {
+                                        $gte: [
+                                            "$createdAt",
+                                            {
+                                                $dateAdd: {
+                                                    startDate: { $dateTrunc: { date: "$$NOW", unit: "day", timezone } },
+                                                    unit: "day",
+                                                    amount: -1
+                                                }
+                                            }
+
+                                        ]
+                                    },
+                                    {
+                                        $lt: [
+                                            "$createdAt",
+                                            { $dateTrunc: { date: "$$NOW", unit: "day", timezone } }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    { $group: { _id: null, revenue: { $sum: "$netAmount" }, orders: { $sum: 1 } } }
+                ],
+
+                thisMonth: [
+                    {
+                        $match: {
+                            status: { $ne: "Cancelled" },
+                            $expr: {
+                                $and: [
+                                    {
+                                        $gte: [
+                                            "$createdAt",
+                                            { $dateTrunc: { date: "$$NOW", unit: "month", timezone } }
+                                        ]
+                                    },
+                                    {
+                                        $lt: [
+                                            "$createdAt",
+                                            {
+                                                $dateAdd: {
+                                                    startDate: { $dateTrunc: { date: "$$NOW", unit: "month", timezone } },
+                                                    unit: "month",
+                                                    amount: 1
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    { $group: { _id: null, revenue: { $sum: "$netAmount" }, orders: { $sum: 1 } } }
+                ],
+
+                lastMonth: [
+                    {
+                        $match: {
+                            status: { $ne: "Cancelled" },
+                            $expr: {
+                                $and: [
+                                    {
+                                        $gte: [
+                                            "$createdAt",
+                                            {
+                                                $dateAdd: {
+                                                    startDate: { $dateTrunc: { date: "$$NOW", unit: "month", timezone } },
+                                                    unit: "month",
+                                                    amount: -1
+                                                }
+                                            }
+
+                                        ]
+                                    },
+                                    {
+                                        $lt: [
+                                            "$createdAt",
+                                            { $dateTrunc: { date: "$$NOW", unit: "month", timezone } }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    { $group: { _id: null, revenue: { $sum: "$netAmount" }, orders: { $sum: 1 } } }
+                ],
+            }
+        }
+    ])
+
+    const data = result[0]
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            today: data.today[0] || { revenue: 0, orders: 0 },
+            yesterday: data.yesterday[0] || { revenue: 0, orders: 0 },
+            thisMonth: data.thisMonth[0] || { revenue: 0, orders: 0 },
+            lastMonth: data.lastMonth[0] || { revenue: 0, orders: 0 }
+        },
+            "Revenue and Orders Count Fetched"
+        )
+    )
+})
+
 
 
 
@@ -183,7 +340,7 @@ const getOrder = asyncHandler(async (req, res) => {
     const { order_id } = req.params
 
     if (!order_id) {
-        throw new ApiError(406, "Order_Id is required")
+        throw new ApiError(400, "Order_Id is required")
     }
 
 
@@ -310,6 +467,10 @@ const getOrder = asyncHandler(async (req, res) => {
         }
     ]);
 
+    if (!fetchedOrder) {
+        throw new ApiError(404, "No order found")
+    }
+
 
     return res.status(200).json(
         new ApiResponse(
@@ -321,9 +482,49 @@ const getOrder = asyncHandler(async (req, res) => {
 
 })
 
+const cancelOrder = asyncHandler(async (req, res) => {
+    const { order_id } = req.params
+
+    if (!order_id) {
+        throw new ApiError(400, "Order Id required")
+    }
+
+    const order = await Order.findById(order_id)
+
+    if (!order) {
+        throw new ApiError(404, "Order Not Fount with this Id")
+    }
+
+    const orderTime = order.createdAt.getTime()
+
+    // order.createdAt.toLocaleDateString
+
+    const timeFromOrder = Date.now() - orderTime
+
+    const allowdCancel = timeFromOrder <= 1800000
+
+    if (req.owner || allowdCancel) {
+        order.status = "Cancelled"
+
+        await order.save({ validateBeforeSave: false })
+
+    } else {
+        throw new ApiError(401, "cancellation not allowd")
+    }
+
+
+    return res.status(200).json(
+        new ApiResponse(
+            200, order.status, "Order cancelled"
+        )
+    )
+
+})
+
 
 module.exports = {
     getOrder,
+    cancelOrder,
 
 
     // for user
@@ -331,5 +532,6 @@ module.exports = {
 
 
     // for owner
-    getAllOrders
+    getAllOrders,
+    getRevenueAndOrders
 }
