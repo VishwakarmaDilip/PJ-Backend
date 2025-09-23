@@ -84,6 +84,161 @@ const createOrder = asyncHandler(async (req, res) => {
         )
 })
 
+const fetchAllordersUser = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, sortBy = "createdAt", sortType = "descending", startDate, endDate } = req.query
+    const user = req.user_id
+
+
+    const pageNumber = parseInt(page, 10)
+    const limitNumber = parseInt(limit, 10)
+    const skip = (pageNumber - 1) * limitNumber
+
+    const sortOrder = sortType === "ascending" ? 1 : -1
+    const matchObject = {}
+
+    if (user) {
+        matchObject["customer._id"] = new mongoose.Types.ObjectId(user)
+    }
+
+    if (startDate || endDate) {
+        matchObject.createdAt = {}
+        if (startDate) {
+            matchObject.createdAt.$gte = new Date(startDate)
+        }
+        if (endDate) {
+            matchObject.createdAt.$lte = new Date(endDate)
+        }
+    }
+
+    const fetchedOrders = await Order.aggregate([
+        {
+            $lookup: {
+                from: "products",
+                let: {
+                    productIds: {
+                        $map: {
+                            input: { $ifNull: ["$products", []] },
+                            as: "p",
+                            in: "$$p.product"
+                        }
+                    }
+                },
+                pipeline: [
+                    { $match: { $expr: { $in: ["$_id", "$$productIds"] } } },
+                    {
+                        $project: {
+                            description: 0,
+                            discount: 0,
+                            quantity: 0,
+                            createdAt: 0,
+                            updatedAt: 0,
+                            __v: 0
+                        }
+                    }
+                ],
+                as: "productDocs"
+            }
+        },
+        {
+            $addFields: {
+                products: {
+                    $map: {
+                        input: { $ifNull: ["$products", []] },
+                        as: "item",
+                        in: {
+                            $mergeObjects: [
+                                "$$item",
+                                {
+                                    product: {
+                                        $arrayElemAt: [
+                                            {
+                                                $filter: {
+                                                    input: "$productDocs",
+                                                    as: "pd",
+                                                    cond: { $eq: ["$$pd._id", "$$item.product"] }
+                                                }
+                                            },
+                                            0
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "customer",
+                foreignField: "_id",
+                as: "customer",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            fullName: 1,
+                            email: 1,
+                            mobile: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: {
+                path: "$customer",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        { $match: matchObject },
+        { $sort: { [sortBy]: sortOrder } },
+        { $skip: skip },
+        { $limit: limitNumber },
+        { $project: { updatedAt: 0, __v: 0,productDocs:0 } }
+    ])
+
+    const countResult = await Order.aggregate([
+        {
+            $lookup: {
+                from: "users",
+                localField: "customer",
+                foreignField: "_id",
+                as: "customer"
+            }
+        },
+        {
+            $unwind: {
+                path: "$customer",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        { $match: matchObject },
+        { $count: "totalOrders" }
+    ])
+
+    const totalOrders = countResult[0]?.totalOrders || 0
+
+    const pageInfo = {
+        page: pageNumber,
+        limit: limitNumber,
+        totalOrders,
+        toatalPages: Math.ceil(totalOrders / limitNumber)
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                pageInfo,
+                fetchedOrders
+            }
+        )
+    )
+
+})
+
 
 
 // for owner
@@ -529,6 +684,7 @@ module.exports = {
 
     // for user
     createOrder,
+    fetchAllordersUser,
 
 
     // for owner
