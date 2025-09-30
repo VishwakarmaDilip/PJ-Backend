@@ -11,10 +11,10 @@ const { default: mongoose } = require("mongoose");
 
 // for user
 const createOrder = asyncHandler(async (req, res) => {
-    const { deliveryData, cartId, paymentType } = req.body
+    const { deliveryData, cartId, paymentType, delivery } = req.body
     const user = req.user
 
-    if (!deliveryData, !cartId, !paymentType) {
+    if (!deliveryData, !cartId, !paymentType, !delivery) {
         throw new ApiError(400, "all feild required")
     }
     if (!user) {
@@ -50,6 +50,7 @@ const createOrder = asyncHandler(async (req, res) => {
             grossAmount,
             shippingAmount,
             netAmount,
+            delivery,
             paymentStatus,
             paymentType
         }
@@ -72,8 +73,19 @@ const createOrder = asyncHandler(async (req, res) => {
         throw new ApiError(404, "user not found")
     }
 
+
+    products.forEach(async (item) => {
+        const product = await Product?.findById(item.product)
+        const updatedQuantity = product?.quantity - item?.quantity
+
+        product.quantity = updatedQuantity
+        await product.save({validateBeforeSave:false})
+    })
+
+
     cart.products = []
-    consumer.orders = order._id
+    cart.cartValue = 0
+    consumer.orders.push(order._id)
     await cart.save({ validateBeforeSave: false })
     await consumer.save({ validateBeforeSave: false })
 
@@ -85,7 +97,7 @@ const createOrder = asyncHandler(async (req, res) => {
 })
 
 const fetchAllordersUser = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy = "createdAt", sortType = "descending", startDate, endDate } = req.query
+    const { page = 1, limit = 10, sortBy = "createdAt", sortType = "descending", startDate, endDate, orderStatus } = req.query
     const user = req.user_id
 
 
@@ -108,6 +120,10 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
         if (endDate) {
             matchObject.createdAt.$lte = new Date(endDate)
         }
+    }
+
+    if (orderStatus != "") {
+        matchObject.status = orderStatus
     }
 
     const fetchedOrders = await Order.aggregate([
@@ -196,7 +212,7 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
         { $sort: { [sortBy]: sortOrder } },
         { $skip: skip },
         { $limit: limitNumber },
-        { $project: { updatedAt: 0, __v: 0,productDocs:0 } }
+        { $project: { updatedAt: 0, __v: 0, productDocs: 0 } }
     ])
 
     const countResult = await Order.aggregate([
@@ -226,6 +242,10 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
         totalOrders,
         toatalPages: Math.ceil(totalOrders / limitNumber)
     }
+
+
+
+
 
     return res.status(200).json(
         new ApiResponse(

@@ -270,16 +270,17 @@ const getUserDetail = asyncHandler(async (req, res) => {
 
 // address related controllers
 const createAddress = asyncHandler(async (req, res) => {
-    const {name, lastName, mobile, address, landmark, city, pinCode, state } = req.body
+    const { firstName, lastName, mobile, address, landmark, city, pinCode, state } = req.body
 
-    if (!name || !lastName ||!mobile || !address || !city || !pinCode || !state) {
+
+    if (!firstName || !lastName || !mobile || !address || !city || !pinCode || !state) {
         throw new ApiError(406, "All feilds are required")
     }
 
     const newAddress = await Address.create({
         customer: req.user._id,
-        receiver:{
-            firstName: name,
+        receiver: {
+            firstName,
             lastName,
             mobile
         },
@@ -352,7 +353,7 @@ const getAllAddress = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, AllAddress , "Addresses fetched successfully"))
+        .json(new ApiResponse(200, AllAddress, "Addresses fetched successfully"))
 
 })
 
@@ -366,21 +367,23 @@ const getAddress = asyncHandler(async (req, res) => {
 
     const address = await Address.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(addressId) } },
-        { $unwind: "$receiver"},
-        { $project: {
-            _id: 1,
-            firstName: "$receiver.firstName",
-            lastName: "$receiver.lastName",
-            mobile: "$receiver.mobile",
-            address: 1,
-            landmark: 1,
-            city: 1,
-            pinCode: 1,
-            state: 1
-        } }
+        { $unwind: "$receiver" },
+        {
+            $project: {
+                _id: 1,
+                firstName: "$receiver.firstName",
+                lastName: "$receiver.lastName",
+                mobile: "$receiver.mobile",
+                address: 1,
+                landmark: 1,
+                city: 1,
+                pinCode: 1,
+                state: 1
+            }
+        }
     ])
 
-    
+
     if (!address) {
         throw new ApiError(404, "Address not found")
     }
@@ -446,7 +449,7 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id)?.select("-password -refreshToken")
     const { productId, quantity = 1 } = req.body
 
-    
+
     if (!user) {
         throw new ApiError(404, "User not found")
     }
@@ -464,10 +467,10 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
     let cart
     if (user.cart && user.cart !== "") {
 
-        
+
         const userCart = await Cart.findById(user.cart._id)
         const productInCart = userCart.products.filter(prod => prod.product.toString() == productId)
-        
+
 
         if (productInCart.length > 0) {
             await Cart.updateOne(
@@ -476,18 +479,10 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
                     $set: {
                         "products.$.quantity": quantity,
                         "products.$.totalAmount": totalPrice
-                    }
+                    },
+                    $inc: { cartValue: totalPrice - productInCart[0].totalAmount }
                 },
             )
-
-            const newCart = await Cart.findById(user.cart._id)
-
-            newCart.cartValue = newCart.products.reduce((sum, item) => sum + item.totalAmount, 0)
-
-
-            await newCart.save()
-
-            cart = await Cart.findById(user.cart._id)
         } else {
             cart = await Cart.findByIdAndUpdate(
                 user.cart,
@@ -499,9 +494,8 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
                             totalAmount: totalPrice
                         }
                     },
-                    $set: {
-                        cartValue: await Cart.findById(user.cart).then(cart => cart.cartValue + (totalPrice))
-                    }
+                    $inc:
+                        { cartValue: totalPrice }
                 },
                 { new: true }
             )
@@ -801,13 +795,13 @@ const deleteProductfromList = asyncHandler(async (req, res) => {
 
     const indexOfProduct = user.wishList.findIndex((pid) => pid.toString() === productId)
 
-    if(indexOfProduct < 0){
+    if (indexOfProduct < 0) {
         throw new ApiError(404, "Product not in list")
     }
 
-    user.wishList.splice(indexOfProduct,1)
-    const updatedWishList = (await user.save({validateBeforeSave:false})).wishList
-    
+    user.wishList.splice(indexOfProduct, 1)
+    const updatedWishList = (await user.save({ validateBeforeSave: false })).wishList
+
 
     return res
         .status(200)

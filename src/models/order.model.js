@@ -71,6 +71,9 @@ const orderSchema = new mongoose.Schema(
             enum: ["Placed", "Shipping", "Delivered", "Cancelled"],
             default: "Placed"
         },
+        delivery: {
+           type: String 
+        },
         trackingId: {
             type: String
         },
