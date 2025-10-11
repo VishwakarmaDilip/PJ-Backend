@@ -32,7 +32,7 @@ const createOrder = asyncHandler(async (req, res) => {
     const shippingAmount = shippingCharge
     const netAmount = grossAmount + shippingAmount
     const address = deliveryData._id
-    const paymentStatus = paymentType === "POD" ? "unpaid" : "paid"
+    const paymentStatus = paymentType === "COD" ? "unpaid" : "paid"
 
     const counter = await Counter.findOneAndUpdate(
         { id: "order" },
