@@ -263,7 +263,7 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
 
 // for owner
 const getAllOrders = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "descending" } = req.query
+    const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "descending", startDate, endDate } = req.query
     const user = req.owner
 
     const pageNumber = parseInt(page, 10)
@@ -285,6 +285,16 @@ const getAllOrders = asyncHandler(async (req, res) => {
 
     if (mongoose.Types.ObjectId.isValid(query)) {
         queryObject.$or.push({ "customer._id": new mongoose.Types.ObjectId(query) });
+    }
+
+     if (startDate || endDate) {
+        queryObject.createdAt = {}
+        if (startDate) {
+            queryObject.createdAt.$gte = new Date(startDate)
+        }
+        if (endDate) {
+            queryObject.createdAt.$lte = new Date(endDate)
+        }
     }
 
     const fetchedOrders = await Order.aggregate([
@@ -344,7 +354,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
         page: pageNumber,
         limit: limitNumber,
         totalOrders,
-        toatalPages: Math.ceil(totalOrders / limitNumber)
+        totalPages: Math.ceil(totalOrders / limitNumber)
     }
 
     return res.status(200).json(
