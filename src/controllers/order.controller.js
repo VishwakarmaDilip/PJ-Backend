@@ -263,7 +263,7 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
 
 // for owner
 const getAllOrders = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "descending", startDate, endDate } = req.query
+    const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "descending", startDate, endDate, orderStatus, paymentType } = req.query
     const user = req.owner
 
     const pageNumber = parseInt(page, 10)
@@ -290,11 +290,18 @@ const getAllOrders = asyncHandler(async (req, res) => {
      if (startDate || endDate) {
         queryObject.createdAt = {}
         if (startDate) {
-            queryObject.createdAt.$gte = new Date(startDate)
+            queryObject.createdAt.$gte = new Date(Number(startDate))
         }
         if (endDate) {
-            queryObject.createdAt.$lte = new Date(endDate)
+            queryObject.createdAt.$lte = new Date(Number(endDate))
         }
+    }
+    if (orderStatus) {
+        queryObject.status = orderStatus  
+    }
+
+    if (paymentType) {
+        queryObject.paymentType = paymentType  
     }
 
     const fetchedOrders = await Order.aggregate([
