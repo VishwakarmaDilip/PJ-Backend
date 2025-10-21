@@ -34,17 +34,30 @@ const createOrder = asyncHandler(async (req, res) => {
     const address = deliveryData._id
     const paymentStatus = paymentType === "COD" ? "unpaid" : "paid"
 
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2,"0")
+    const counterKey = `invoice_${year}_${month}`
+
     const counter = await Counter.findOneAndUpdate(
         { id: "order" },
         { $inc: { sequence: 1 } },
         { new: true, upsert: true }
     )
 
+    const invoiceCounter = await Counter.findOneAndUpdate(
+        { id: "invoice" },
+        { $inc: { sequence: 1 } },
+        { new: true, upsert: true }
+    )
+
     const orderId = String(counter.sequence).padStart(6, "0")
+    const invoiceId = `INV${year}${month}${String(invoiceCounter.sequence).padStart(4,"0")}`
 
     const order = await Order.create(
         {
             orderId,
+            invoiceId,
             products,
             customer: user._id,
             grossAmount,

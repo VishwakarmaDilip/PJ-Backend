@@ -7,6 +7,11 @@ const orderSchema = new mongoose.Schema(
             unique: true,
             required: true
         },
+        invoiceId: {
+            type: String,
+            unique: true,
+            required: true
+        },
         products: {
             type: Array,
             required: true
