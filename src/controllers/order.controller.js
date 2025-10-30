@@ -256,10 +256,6 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
         toatalPages: Math.ceil(totalOrders / limitNumber)
     }
 
-
-
-
-
     return res.status(200).json(
         new ApiResponse(
             200,

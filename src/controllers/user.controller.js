@@ -395,13 +395,13 @@ const getAddress = asyncHandler(async (req, res) => {
 
 const updateAddress = asyncHandler(async (req, res) => {
     const { addressId } = req.params
-    const { address, area, city, pinCode, state } = req.body
+    const { address, landmark, city, pinCode, state, mobile, firstName, lastName } = req.body
 
     if (!addressId) {
         throw new ApiError(406, "Address ID is required")
     }
 
-    if (!address || !area || !city || !pinCode || !state) {
+    if (!address || !landmark || !city || !pinCode || !state || !firstName || !lastName || !mobile) {
         throw new ApiError(406, "All fields are required")
     }
 
@@ -409,10 +409,15 @@ const updateAddress = asyncHandler(async (req, res) => {
         addressId,
         {
             address,
-            area,
+            landmark,
             city,
             pinCode,
-            state
+            state,
+            receiver: {
+                firstName,
+                lastName,
+                mobile
+            }
         },
         { new: true }
     )
