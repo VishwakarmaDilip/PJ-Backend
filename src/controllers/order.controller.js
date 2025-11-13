@@ -111,8 +111,10 @@ const createOrder = asyncHandler(async (req, res) => {
 
 const fetchAllordersUser = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy = "createdAt", sortType = "descending", startDate, endDate, orderStatus } = req.query
-    const user = req.user_id
+    const user = req.user
 
+    console.log(user._id);
+    
 
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
@@ -121,17 +123,17 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
     const sortOrder = sortType === "ascending" ? 1 : -1
     const matchObject = {}
 
-    if (user) {
+    if (user._id) {
         matchObject["customer._id"] = new mongoose.Types.ObjectId(user)
     }
 
     if (startDate || endDate) {
         matchObject.createdAt = {}
         if (startDate) {
-            matchObject.createdAt.$gte = new Date(startDate)
+            matchObject.createdAt.$gte = new Date(Number(startDate))
         }
         if (endDate) {
-            matchObject.createdAt.$lte = new Date(endDate)
+            matchObject.createdAt.$lte = new Date(Number(endDate))
         }
     }
 
@@ -253,7 +255,7 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
         page: pageNumber,
         limit: limitNumber,
         totalOrders,
-        toatalPages: Math.ceil(totalOrders / limitNumber)
+        totalPages: Math.ceil(totalOrders / limitNumber)
     }
 
     return res.status(200).json(
