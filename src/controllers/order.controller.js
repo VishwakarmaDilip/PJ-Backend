@@ -113,9 +113,6 @@ const fetchAllordersUser = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, sortBy = "createdAt", sortType = "descending", startDate, endDate, orderStatus } = req.query
     const user = req.user
 
-    console.log(user._id);
-    
-
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
     const skip = (pageNumber - 1) * limitNumber
