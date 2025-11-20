@@ -535,7 +535,6 @@ const getRevenueAndOrders = asyncHandler(async (req, res) => {
 
 
 
-
 const getOrder = asyncHandler(async (req, res) => {
     const { order_id } = req.params
 
