@@ -118,9 +118,10 @@ const loginUser = asyncHandler(async (req, res) => {
     )
 
     const option = {
-        httpOnly: false,
+        httpOnly: true,
         secure: true,
-        domain: "devbydilip.cloud",
+        sameSite: "none",
+        path: "/"
     }
 
 

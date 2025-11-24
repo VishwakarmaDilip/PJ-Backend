@@ -3,9 +3,27 @@ version: '3.9'
 services:
   back-end:
     build: .
-    container_name: back-end_server
+    container_name: backend_server
     ports:
       - "3000:3000"
     env_file:
-      - ./.env
+      - .env
+    labels:
+      - "traefik.enable=true"
+
+      # Router → domain
+      - "traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+
+      # Service → internal port (your backend port)
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+
+    networks:
+      - traefik
+
     restart: unless-stopped
+
+networks:
+  traefik:
+    external: true
