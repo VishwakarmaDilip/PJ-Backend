@@ -1,0 +1,12 @@
+version: '3.9'
+
+services:
+  back-end:
+    build: .
+    container_name: back-end_server
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
+    restart: unless-stopped
+
