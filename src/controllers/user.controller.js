@@ -120,6 +120,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const option = {
         httpOnly: false,
         secure: true,
+        domain: "devbydilip.cloud",
     }
 
 
