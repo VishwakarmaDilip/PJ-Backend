@@ -5,6 +5,8 @@ const cookieParser = require('cookie-parser')
 
 const app = express()
 
+app.options("*", (req,res) => res.sendStatus(200));
+
 const whiteList = process.env.CORS_ORIGIN_WHITELIST
 
 app.use(cors({
@@ -18,7 +20,6 @@ app.use(cors({
     credentials:true
 }))
 
-app.options("*", (req,res) => res.sendStatus(200));
 app.use(express.json({limit:"16kb"}))
 app.use(express.urlencoded({extended:true,limit:"16kb"}))
 app.use(express.static("public"))
