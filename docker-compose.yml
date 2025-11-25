@@ -4,29 +4,37 @@ services:
   back-end:
     build: .
     container_name: backend_server
-    ports:
-      - "3000:3000"
+
+    # ❗ REMOVE THIS — Traefik must handle ports
+    # ports:
+    #   - "3000:3000"
+
     env_file:
       - .env
+
     labels:
       - traefik.enable=true
 
       # ROUTER →
       - traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)
-      - traefik.http.routers.backend.entrypoints=web,websecure
+      - traefik.http.routers.backend.entrypoints=websecure
       - traefik.http.routers.backend.tls=true
       - traefik.http.routers.backend.tls.certresolver=mytlschallenge
 
       # SERVICE →
       - traefik.http.services.backend.loadbalancer.server.port=3000
 
-      # MIDDLEWARE (HTTPS + security headers)
+      # FORCE HTTPS
       - traefik.http.middlewares.backend-force-secure.redirectscheme.scheme=https
-      - traefik.http.routers.backend.middlewares=backend-force-secure@docker
 
-      # Allow cookies to pass through (VERY IMPORTANT)
-      - traefik.http.middlewares.backend-headers.headers.stsSeconds=31536000
+      # "Set-Cookie" & credentials allowed
+      - traefik.http.middlewares.backend-headers.headers.accessControlAllowOriginList=https://devbydilip.cloud,https://www.devbydilip.cloud,http://localhost:5174
       - traefik.http.middlewares.backend-headers.headers.accessControlAllowCredentials=true
+      - traefik.http.middlewares.backend-headers.headers.accessControlAllowMethods=GET,POST,PUT,PATCH,DELETE,OPTIONS
+      - traefik.http.middlewares.backend-headers.headers.accessControlAllowHeaders=*
+      - traefik.http.middlewares.backend-headers.headers.accessControlExposeHeaders=*
+
+      # Attach both middlewares
       - traefik.http.routers.backend.middlewares=backend-force-secure@docker,backend-headers@docker
 
     networks:
@@ -37,4 +45,3 @@ services:
 networks:
   traefik:
     external: true
-    name: root_default
