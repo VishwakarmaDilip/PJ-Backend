@@ -25,7 +25,7 @@ services:
       - traefik.http.services.backend.loadbalancer.server.port=3000
 
       # FORCE HTTPS
-      - traefik.http.middlewares.backend-force-secure.redirectscheme.scheme=https
+      # - traefik.http.middlewares.backend-force-secure.redirectscheme.scheme=https
 
       # "Set-Cookie" & credentials allowed
       - traefik.http.middlewares.backend-headers.headers.accessControlAllowOriginList=https://devbydilip.cloud,https://www.devbydilip.cloud,http://localhost:5174
