@@ -9,15 +9,25 @@ services:
     env_file:
       - .env
     labels:
-      - "traefik.enable=true"
+      - traefik.enable=true
 
-      # Router → domain
-      - "traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      # ROUTER →
+      - traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)
+      - traefik.http.routers.backend.entrypoints=web,websecure
+      - traefik.http.routers.backend.tls=true
+      - traefik.http.routers.backend.tls.certresolver=mytlschallenge
 
-      # Service → internal port (your backend port)
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      # SERVICE →
+      - traefik.http.services.backend.loadbalancer.server.port=3000
+
+      # MIDDLEWARE (HTTPS + security headers)
+      - traefik.http.middlewares.backend-force-secure.redirectscheme.scheme=https
+      - traefik.http.routers.backend.middlewares=backend-force-secure@docker
+
+      # Allow cookies to pass through (VERY IMPORTANT)
+      - traefik.http.middlewares.backend-headers.headers.stsSeconds=31536000
+      - traefik.http.middlewares.backend-headers.headers.accessControlAllowCredentials=true
+      - traefik.http.routers.backend.middlewares=backend-force-secure@docker,backend-headers@docker
 
     networks:
       - traefik
