@@ -14,25 +14,11 @@ services:
 
     labels:
       - traefik.enable=true
-
-      # ROUTER →
       - traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)
       - traefik.http.routers.backend.entrypoints=websecure
       - traefik.http.routers.backend.tls=true
       - traefik.http.routers.backend.tls.certresolver=mytlschallenge
-
-      # SERVICE →
       - traefik.http.services.backend.loadbalancer.server.port=3000
-
-      # "Set-Cookie" & credentials allowed
-      - traefik.http.middlewares.backend-headers.headers.accessControlAllowOriginList=https://devbydilip.cloud,https://www.devbydilip.cloud,http://localhost:5173,http://192.168.0.106:5173
-      - traefik.http.middlewares.backend-headers.headers.accessControlAllowCredentials=true
-      - traefik.http.middlewares.backend-headers.headers.accessControlAllowMethods=GET,POST,PUT,PATCH,DELETE,OPTIONS
-      - traefik.http.middlewares.backend-headers.headers.accessControlAllowHeaders=*
-      - traefik.http.middlewares.backend-headers.headers.accessControlExposeHeaders=*
-
-      # Attach both middlewares
-      - traefik.http.routers.backend.middlewares=backend-force-secure@docker,backend-headers@docker
 
     networks:
       - traefik
