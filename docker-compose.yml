@@ -24,7 +24,6 @@ services:
       # SERVICE →
       - traefik.http.services.backend.loadbalancer.server.port=3000
 
-
       # "Set-Cookie" & credentials allowed
       - traefik.http.middlewares.backend-headers.headers.accessControlAllowOriginList=https://devbydilip.cloud,https://www.devbydilip.cloud,http://localhost:5173
       - traefik.http.middlewares.backend-headers.headers.accessControlAllowCredentials=true
