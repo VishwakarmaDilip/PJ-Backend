@@ -20,6 +20,7 @@ const {
     addToList,
     getWishList,
     deleteProductfromList,
+    checkLoggedInUser,
 } = require("../controllers/user.controller");
 const { upload } = require("../middlewares/multer.middleware");
 const { getAllProducts, getProduct, getCategory } = require("../controllers/product.controller");
@@ -30,6 +31,7 @@ const router = Router()
 
 router.route("/register").post(registerUser)
 router.route("/login").post(loginUser)
+router.route("/me").get(checkLoggedInUser)
 router.route("/getProducts").get(getAllProducts)
 router.route("/getProduct/:product_id").get(getProduct)
 router.route("/category/getCategories").get(getCategory)

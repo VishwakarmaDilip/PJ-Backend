@@ -268,6 +268,25 @@ const getUserDetail = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "User detail fetched successfully"))
 })
 
+const checkLoggedInUser = asyncHandler(async (req, res) => {
+    const token = req.cookies?.accessToken
+
+    // console.log(req);
+    
+
+    if (!token) {
+        throw new ApiError(401, "User not logged in")
+    }
+
+
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200,{loggedIn:true}, "User is logged in" )
+        )
+})
+
 
 // address related controllers
 const createAddress = asyncHandler(async (req, res) => {
@@ -829,6 +848,7 @@ module.exports = {
     updateAccountDetail,
     updateAvatar,
     getUserDetail,
+    checkLoggedInUser,
 
     createAddress,
     getAllAddress,
