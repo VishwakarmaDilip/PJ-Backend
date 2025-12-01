@@ -7,7 +7,7 @@ services:
 
     # ❗ REMOVE THIS — Traefik must handle ports
     # ports:
-    #   - "3000:3000"
+    #   - "3000:300"
 
     env_file:
       - .env
