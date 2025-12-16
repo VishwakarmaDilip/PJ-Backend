@@ -163,6 +163,25 @@ const logoutOwner = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Owner Logged out"))
 })
 
+const checkLoggedInOwner = asyncHandler(async (req, res) => {
+    const token = req.cookies?.accessToken
+
+    console.log(req);
+    
+
+    if (!token) {
+        throw new ApiError(401, "Owner not logged in")
+    }
+
+
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200,{loggedIn:true}, "Owner is logged in" )
+        )
+})
+
 const changeCurrentPassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body
 
@@ -321,6 +340,7 @@ module.exports = {
     registerOwner,
     loginOwner,
     logoutOwner,
+    checkLoggedInOwner,
     changeCurrentPassword,
     updateAcountDetail,
     updateAvatar,

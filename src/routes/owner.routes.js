@@ -7,7 +7,8 @@ const {
     updateAcountDetail,
     updateAvatar,
     getAllCustomers,
-    getCustomerDetail
+    getCustomerDetail,
+    checkLoggedInOwner
 } = require('../controllers/owner.controller')
 const { upload } = require('../middlewares/multer.middleware')
 const { verifyJWT } = require('../middlewares/auth.middleware')
@@ -17,6 +18,7 @@ const router = Router()
 
 router.route("/register").post(upload.none(), registerOwner)
 router.route("/login").post(loginOwner)
+router.route("/me").get(checkLoggedInOwner)
 
 
 // secured routes
