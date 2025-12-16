@@ -116,10 +116,9 @@ const loginOwner = asyncHandler(async (req, res) => {
     )
 
     const option = {
-        httpOnly: false,
+        httpOnly: true,
         secure: true,
         sameSite: "None",
-        path: "/"
     }
 
 
