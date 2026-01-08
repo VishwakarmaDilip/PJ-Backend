@@ -4,11 +4,6 @@ services:
   back-end:
     build: .
     container_name: backend_server
-
-    # ❗ REMOVE THIS — Traefik must handle ports
-    # ports:
-    #   - "3000:3000"
-
     env_file:
       - .env
 
@@ -19,6 +14,40 @@ services:
       - traefik.http.routers.backend.tls=true
       - traefik.http.routers.backend.tls.certresolver=mytlschallenge
       - traefik.http.services.backend.loadbalancer.server.port=3000
+
+    networks:
+      - traefik
+
+    restart: unless-stopped
+
+  user-frontend:
+    build: ./Preeti-Jewellery-React
+    container_name: user-frontend
+
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)
+      - traefik.http.routers.backend.entrypoints=websecure
+      - traefik.http.routers.backend.tls=true
+      - traefik.http.routers.backend.tls.certresolver=mytlschallenge
+      - traefik.http.services.backend.loadbalancer.server.port=80
+
+    networks:
+      - traefik
+
+    restart: unless-stopped
+
+  admin-frontend:
+    build: ./Preety-Jewellery-Admin-Page
+    container_name: admin-frontend
+
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)
+      - traefik.http.routers.backend.entrypoints=websecure
+      - traefik.http.routers.backend.tls=true
+      - traefik.http.routers.backend.tls.certresolver=mytlschallenge
+      - traefik.http.services.backend.loadbalancer.server.port=80
 
     networks:
       - traefik
