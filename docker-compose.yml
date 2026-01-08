@@ -26,7 +26,7 @@ services:
 
     labels:
       - traefik.enable=true
-      - traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)
+      - traefik.http.routers.backend.rule=Host(`prettyadornment.devbydilip.cloud`)
       - traefik.http.routers.backend.entrypoints=websecure
       - traefik.http.routers.backend.tls=true
       - traefik.http.routers.backend.tls.certresolver=mytlschallenge
@@ -43,7 +43,7 @@ services:
 
     labels:
       - traefik.enable=true
-      - traefik.http.routers.backend.rule=Host(`api.devbydilip.cloud`)
+      - traefik.http.routers.backend.rule=Host(`prettyadornment_admin.devbydilip.cloud`)
       - traefik.http.routers.backend.entrypoints=websecure
       - traefik.http.routers.backend.tls=true
       - traefik.http.routers.backend.tls.certresolver=mytlschallenge
