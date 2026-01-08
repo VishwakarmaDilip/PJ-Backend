@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   user-frontend:
-    build: ./Preeti-Jewellery-React
+    build: ../Preeti-Jewellery-React
     container_name: user-frontend
 
     labels:
@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
 
   admin-frontend:
-    build: ./Preety-Jewellery-Admin-Page
+    build: ../Preety-Jewellery-Admin-Page
     container_name: admin-frontend
 
     labels:
