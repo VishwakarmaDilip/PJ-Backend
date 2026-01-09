@@ -276,8 +276,13 @@ const checkLoggedInUser = asyncHandler(async (req, res) => {
     
 
     if (!token) {
+        console.log("logged in nahi hai");
+        
         throw new ApiError(401, "User not logged in")
     }
+
+    console.log("logged ho gaya");
+    
 
 
 
