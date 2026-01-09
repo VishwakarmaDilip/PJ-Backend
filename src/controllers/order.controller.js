@@ -521,6 +521,9 @@ const getRevenueAndOrders = asyncHandler(async (req, res) => {
 
     const data = result[0]
 
+    console.log(data);
+    
+
     return res.status(200).json(
         new ApiResponse(200, {
             today: data.today[0] || { revenue: 0, orders: 0 },

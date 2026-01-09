@@ -124,8 +124,8 @@ const loginOwner = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, option)
-        .cookie("refreshToken", refreshToken, option)
+        .cookie("ownerAccessToken", accessToken, option)
+        .cookie("ownerRefreshToken", refreshToken, option)
         .json(
             new ApiResponse(
                 200,
@@ -158,13 +158,13 @@ const logoutOwner = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .clearCookie("accessToken", option)
-        .clearCookie("refreshToken", option)
+        .clearCookie("ownerAccessToken", option)
+        .clearCookie("ownerRefreshToken", option)
         .json(new ApiResponse(200, {}, "Owner Logged out"))
 })
 
 const checkLoggedInOwner = asyncHandler(async (req, res) => {
-    const token = req.cookies?.accessToken
+    const token = req.cookies?.ownerAccessToken
 
     console.log(req);
     

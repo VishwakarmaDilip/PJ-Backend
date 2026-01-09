@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { verifyJWT } = require("../middlewares/auth.middleware");
+const { userVerifyJWT } = require("../middlewares/auth.middleware");
 const {
     registerUser,
     loginUser,
@@ -39,7 +39,7 @@ router.route("/address/delivery/getExpectedTAT").get(getExpectedTAT)
 
 
 // secure routes
-router.use(verifyJWT)
+router.use(userVerifyJWT)
 
 router.route("/logout").post(logoutUser)
 router.route("/changeCurrentPassword").put(changeCurrentPassword)
