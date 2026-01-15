@@ -20,7 +20,8 @@ exports.verifyJWT = asyncHandler(async (req, _, next) => {
         try {
             decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
         } catch (error) {
-            decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_USER)
+            // decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+            throw new ApiError(401, "Invalid Access Token")
         }
 
 
@@ -56,9 +57,9 @@ exports.userVerifyJWT = asyncHandler(async (req, _, next) => {
         let decodedToken;
         
         try {
-            decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        } catch (error) {
             decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_USER)
+        } catch (error) {
+            throw new ApiError(401, "Invalid Access Token")   
         }
 
 

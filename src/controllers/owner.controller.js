@@ -164,10 +164,7 @@ const logoutOwner = asyncHandler(async (req, res) => {
 })
 
 const checkLoggedInOwner = asyncHandler(async (req, res) => {
-    const token = req.cookies?.ownerAccessToken
-
-    console.log(req);
-    
+    const token = req.cookies?.ownerAccessToken 
 
     if (!token) {
         throw new ApiError(401, "Owner not logged in")
