@@ -14,6 +14,9 @@ const createOrder = asyncHandler(async (req, res) => {
     const { deliveryData, cartId, paymentType, delivery } = req.body
     const user = req.user
 
+    console.log(req);
+    
+
     if (!deliveryData, !cartId, !paymentType, !delivery) {
         throw new ApiError(400, "all feild required")
     }
@@ -520,9 +523,6 @@ const getRevenueAndOrders = asyncHandler(async (req, res) => {
     ])
 
     const data = result[0]
-
-    console.log(data);
-    
 
     return res.status(200).json(
         new ApiResponse(200, {
