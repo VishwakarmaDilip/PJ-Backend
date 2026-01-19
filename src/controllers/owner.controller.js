@@ -84,7 +84,6 @@ const loginOwner = asyncHandler(async (req, res) => {
     // get data
     const { identifier, password } = req.body
 
-
     // check for username or email
     if (!identifier) {
         throw new ApiError(406, "username or email is required")
@@ -164,10 +163,7 @@ const logoutOwner = asyncHandler(async (req, res) => {
 })
 
 const checkLoggedInOwner = asyncHandler(async (req, res) => {
-    const token = req.cookies?.ownerAccessToken
-
-    console.log(req);
-    
+    const token = req.cookies?.ownerAccessToken 
 
     if (!token) {
         throw new ApiError(401, "Owner not logged in")
