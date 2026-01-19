@@ -84,7 +84,6 @@ const loginOwner = asyncHandler(async (req, res) => {
     // get data
     const { identifier, password } = req.body
 
-
     // check for username or email
     if (!identifier) {
         throw new ApiError(406, "username or email is required")
