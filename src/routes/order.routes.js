@@ -7,6 +7,8 @@ const router = Router()
 
 router.use(verifyJWT) || router.use(userVerifyJWT)
 
+
+
 router.route("/createOrder").post(createOrder)
 router.route("/getAllOrders").get(getAllOrders)
 router.route("/getOrder/:order_id").get(getOrder)
