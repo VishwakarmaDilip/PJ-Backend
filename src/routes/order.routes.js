@@ -1,11 +1,11 @@
 const { Router } = require('express')
-const { verifyJWT } = require('../middlewares/auth.middleware')
+const { verifyJWT, userVerifyJWT } = require('../middlewares/auth.middleware')
 const { createOrder, getAllOrders, getOrder, cancelOrder, getRevenueAndOrders, fetchAllordersUser } = require('../controllers/order.controller')
 
 
 const router = Router()
 
-router.use(verifyJWT)
+router.use(verifyJWT) || router.use(userVerifyJWT)
 
 router.route("/createOrder").post(createOrder)
 router.route("/getAllOrders").get(getAllOrders)
