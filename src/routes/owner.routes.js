@@ -30,5 +30,4 @@ router.route("/getAllCustomers").get(verifyJWT, getAllCustomers)
 router.route("/getCustomer/:customerId").get(verifyJWT,getCustomerDetail)
 
 
-
 module.exports = router
