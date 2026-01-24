@@ -35,6 +35,11 @@ const productSchema = new mongoose.Schema(
         category: {
             type:mongoose.Schema.Types.ObjectId,
             ref:"Category"
+        },
+        status: {
+            type: String,
+            enum: ["Enable", "Disable"],
+            default: "Enable"
         }
     }, { timestamps: true }
 )
