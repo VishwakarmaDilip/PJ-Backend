@@ -58,7 +58,8 @@ const createProduct = asyncHandler(async (req, res) => {
             price,
             quantity,
             category,
-            discount: discount || 0
+            discount: discount || 0,
+            status: "Enable"
         }
     )
 
