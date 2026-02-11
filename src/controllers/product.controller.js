@@ -160,7 +160,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
 })
 
 const updateProduct = asyncHandler(async (req, res) => {
-    const { productName, description, price, category, quantity, previousImages, discount} = req.body
+    const { productName, description, price, category, quantity, previousImages, discount } = req.body
     const { productId } = req.params
     const imageLocalPath = req?.files
 
@@ -237,7 +237,7 @@ const updateProduct = asyncHandler(async (req, res) => {
 })
 
 const getAllProducts = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, category  } = req.query
+    const { page = 1, limit = 10, query, sortBy, sortType, category } = req.query
 
     const pageNumber = parseInt(page, 10)
     const limitNumber = parseInt(limit, 10)
@@ -254,7 +254,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
         ]
     }
 
-    if (category){
+    if (category) {
         queryObject.category = new mongoose.Types.ObjectId(category)
     }
 
@@ -355,6 +355,28 @@ const getProduct = asyncHandler(async (req, res) => {
     )
 })
 
+const disableProduct = asyncHandler(async (req, res) => {
+    const { product_id } = req.params
+    if (!product_id) {
+        throw new ApiError(406, "Product ID is required")
+    }
+    const product = await Product.findById(product_id)
+
+    if (!product) {
+        throw new ApiError(404, "Product Not Found")
+    }
+
+    product.status = "Disable"
+
+    await product.save()
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200, product, "Product Disabled Successfully"
+        ))
+})
+
 
 module.exports = {
     createProduct,
@@ -366,4 +388,5 @@ module.exports = {
     getCategory,
     updateCategory,
     deleteCategory,
+    disableProduct,
 }
