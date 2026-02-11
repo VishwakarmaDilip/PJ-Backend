@@ -355,7 +355,7 @@ const getProduct = asyncHandler(async (req, res) => {
     )
 })
 
-const disableProduct = asyncHandler(async (req, res) => {
+const productStatus = asyncHandler(async (req, res) => {
     const { product_id } = req.params
     if (!product_id) {
         throw new ApiError(406, "Product ID is required")
@@ -366,7 +366,12 @@ const disableProduct = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Product Not Found")
     }
 
-    product.status = "Disable"
+    if (product.status === "Disable") {
+        product.status = "Enable"
+    } else {
+        product.status = "Disable"
+    }
+
 
     await product.save()
 
@@ -388,5 +393,5 @@ module.exports = {
     getCategory,
     updateCategory,
     deleteCategory,
-    disableProduct,
+    productStatus,
 }
