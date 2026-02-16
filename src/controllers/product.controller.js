@@ -91,10 +91,38 @@ const createCategory = asyncHandler(async (req, res) => {
 })
 
 const getCategory = asyncHandler(async (req, res) => {
-    const categories = await Category.find({});
-    if (!categories || categories.length === 0) {
+    const categories = await Category.aggregate([
+        {
+            $lookup: {
+                from: "products",
+                localField:"_id",
+                foreignField:"category",
+                pipeline:[
+                    {$count:"count"}
+                ],
+                as:"productData"
+            }
+        },
+        {
+            $addFields:{
+                productCount:{
+                    $ifNull:[{$arrayElemAt:["$productData.count",0]},0]
+                }
+            }
+        },
+        {
+            $project:{
+                categoryName:1,
+                productCount:1,
+            }
+        }
+    ]);
+
+    if (!categories || categories?.length === 0) {
         throw new ApiError(404, "No categories found");
     }
+
+    
     return res.status(200).json(
         new ApiResponse(200, categories, "Categories fetched successfully")
     );
