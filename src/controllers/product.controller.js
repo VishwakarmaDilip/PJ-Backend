@@ -158,6 +158,12 @@ const deleteCategory = asyncHandler(async (req, res) => {
         throw new ApiError(406, "Category ID is required")
     }
 
+    const productExist = await Product.exists({category: categoryId})
+
+    if(productExist) {
+        throw new ApiError(400, "Cannot Delete Category. Products Are Using This Categroy.")
+    }
+
     const deletedCategory = await Category.findByIdAndDelete(categoryId)
 
     if (!deletedCategory) {
