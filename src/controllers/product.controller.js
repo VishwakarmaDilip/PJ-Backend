@@ -160,6 +160,9 @@ const deleteCategory = asyncHandler(async (req, res) => {
 
     const productExist = await Product.exists({category: categoryId})
 
+    console.log(productExist);
+    
+
     if(productExist) {
         throw new ApiError(400, "Cannot Delete Category. Products Are Using This Categroy.")
     }
@@ -171,7 +174,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(
-        new ApiResponse(200, deletedCategory, "Category deleted successfully")
+        new ApiResponse(200, deleteCategory, "Category deleted successfully")
     )
 })
 
