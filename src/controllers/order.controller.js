@@ -662,7 +662,6 @@ const getOrder = asyncHandler(async (req, res) => {
         {
             $project: {
                 __v: 0,
-                updatedAt: 0,
                 productDocs: 0,
                 tempAddress: 0
             }
