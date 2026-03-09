@@ -1,17 +1,21 @@
 const { Router } = require('express')
-const { verifyJWT} = require('../middlewares/auth.middleware')
+const { verifyJWT, userVerifyJWT} = require('../middlewares/auth.middleware')
 const { createOrder, getAllOrders, getOrder, cancelOrder, getRevenueAndOrders, fetchAllordersUser, updateStatus } = require('../controllers/order.controller')
 
 const router = Router()
 
-router.use(verifyJWT)
+// user
+router.route("/createOrder").post(userVerifyJWT, createOrder)
+router.route("/getOrder/:order_id").get(userVerifyJWT,getOrder)
+router.route("/cancelOrder/:order_id").patch(userVerifyJWT,cancelOrder)
+router.route("/fetchAllOrdersUser").get(userVerifyJWT,fetchAllordersUser)
 
-router.route("/createOrder").post(createOrder)
+// owner
+router.use(verifyJWT)
 router.route("/getAllOrders").get(getAllOrders)
 router.route("/getOrder/:order_id").get(getOrder)
-router.route("/cancelOrder/:order_id").post(cancelOrder)
+router.route("/cancelOrder/:order_id").patch(cancelOrder)
 router.route("/getRevenueAndOrders").get(getRevenueAndOrders)
-router.route("/fetchAllOrdersUser").get(fetchAllordersUser)
 router.route("/updateStatus").patch(updateStatus)
 
 

@@ -12,7 +12,8 @@ const { default: mongoose } = require("mongoose");
 // for user
 const createOrder = asyncHandler(async (req, res) => {
     const { deliveryData, cartId, paymentType, delivery } = req.body
-    const user = req.user  
+    const user = req.user
+  
 
     if (!deliveryData, !cartId, !paymentType, !delivery) {
         throw new ApiError(400, "all feild required")
@@ -533,8 +534,33 @@ const getRevenueAndOrders = asyncHandler(async (req, res) => {
     )
 })
 
+const updateStatus = asyncHandler(async (req,res) => {
+    const {status, order_id} = req.body
+
+    if(!status && !order_id) {
+        throw new ApiError(404, "inputs not received")
+    }
+
+    const order = await Order.findById(order_id)
+
+    if(!order) {
+        throw new ApiError(404, "Order Not Found With This ID")
+    }
+
+    order.status = status
+
+    await order.save({validateBeforeSave: false})
+
+    return res.status(200)
+        .json(
+            new ApiResponse(
+                200, {orderStatus: order.status}, "Status Updated Successfully"
+            )
+        )
+})
 
 
+// common
 const getOrder = asyncHandler(async (req, res) => {
     const { order_id } = req.params
 
@@ -719,33 +745,11 @@ const cancelOrder = asyncHandler(async (req, res) => {
 
 })
 
-const updateStatus = asyncHandler(async (req,res) => {
-    const {status, order_id} = req.body
 
-    if(!status && !order_id) {
-        throw new ApiError(404, "inputs not received")
-    }
-
-    const order = await Order.findById(order_id)
-
-    if(!order) {
-        throw new ApiError(404, "Order Not Found With This ID")
-    }
-
-    order.status = status
-
-    await order.save({validateBeforeSave: false})
-
-    return res.status(200)
-        .json(
-            new ApiResponse(
-                200, {orderStatus: order.status}, "Status Updated Successfully"
-            )
-        )
-})
 
 
 module.exports = {
+    // common
     getOrder,
     cancelOrder,
 
