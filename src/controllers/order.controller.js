@@ -12,10 +12,7 @@ const { default: mongoose } = require("mongoose");
 // for user
 const createOrder = asyncHandler(async (req, res) => {
     const { deliveryData, cartId, paymentType, delivery } = req.body
-    const user = req.user
-
-    console.log(req);
-    
+    const user = req.user  
 
     if (!deliveryData, !cartId, !paymentType, !delivery) {
         throw new ApiError(400, "all feild required")

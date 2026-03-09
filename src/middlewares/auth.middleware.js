@@ -6,74 +6,44 @@ const { ApiError } = require('../utils/ApiError')
 
 
 
-exports.verifyJWT = asyncHandler(async (req, _, next) => {
-    try {
-        const token = req.cookies?.ownerAccessToken || req.header("Authorization")?.replace("Bearer ", "")
-        
-        if (!token) {
-            throw new ApiError(401, "Unauthorized Request")
-        }
+exports.verifyJWT = asyncHandler(async (req, res, next) => {
 
-        let decodedToken;
-        
+    const ownerToken =
+        req.cookies?.ownerAccessToken ||
+        req.header("Authorization")?.replace("Bearer ", "")
+
+    if (ownerToken) {
         try {
-            decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        } catch (error) {
-            throw new ApiError(401, "Invalid Access Token")
-        }
+            const decoded = jwt.verify(ownerToken, process.env.ACCESS_TOKEN_SECRET)
 
+            const owner = await Owner.findById(decoded._id)
+                .select("-password -refreshToken")
 
-        const owner = await Owner.findById(decodedToken._id).select("-password -refreshToken")
-
-        if (!owner) {
-            throw new ApiError(401, "Invalid access Token")
-        }     
-        
-        if (owner) {
-            req.owner = owner
-        }
-        
-        next()
-
-    } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid Access Token")
+            if (owner) {
+                req.owner = owner
+                return next()
+            }
+        } catch (error) { }
     }
+
+    const userToken =
+        req.cookies?.userAccessToken ||
+        req.header("Authorization")?.replace("Bearer ", "")
+
+    if (userToken) {
+        try {
+            const decoded = jwt.verify(userToken, process.env.ACCESS_TOKEN_SECRET_USER)
+
+            const user = await User.findById(decoded._id)
+                .select("-password -refreshToken")
+
+            if (user) {
+                req.user = user
+                return next()
+            }
+        } catch (error) { }
+    }
+
+    throw new ApiError(401, "Unauthorized Request")
 })
 
-
-exports.userVerifyJWT = asyncHandler(async (req, _, next) => {
-    try {
-        
-        const token = req.cookies?.userAccessToken || req.header("Authorization")?.replace("Bearer ", "")
-        
-        if (!token) {
-            throw new ApiError(401, "Unauthorized Request")
-        }
-        
-        let decodedToken;
-        
-        try {
-            decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_USER)
-        } catch (error) {
-            throw new ApiError(401, "Invalid Access Token")   
-        }
-
-
-        const user = await User.findById(decodedToken._id).select("-password -refreshToken")
-
-        if (!user) {
-            throw new ApiError(401, "Invalid access Token")
-        }
-
-     
-        
-        if (user) {
-            req.user = user
-        }
-        
-        next()
-
-    } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid Access Token")
-    }
-})
