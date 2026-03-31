@@ -6,8 +6,8 @@ const router = Router()
 
 // user
 router.route("/createOrder").post(userVerifyJWT, createOrder)
-router.route("/getOrder/:order_id").get(userVerifyJWT,getOrder)
-router.route("/cancelOrder/:order_id").patch(userVerifyJWT,cancelOrder)
+router.route("/getOrder/user/:order_id").get(userVerifyJWT,getOrder)
+router.route("/cancelOrder/user/:order_id").patch(userVerifyJWT,cancelOrder)
 router.route("/fetchAllOrdersUser").get(userVerifyJWT,fetchAllordersUser)
 
 // owner
