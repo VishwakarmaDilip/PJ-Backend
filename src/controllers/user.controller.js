@@ -793,6 +793,7 @@ const getWishList = asyncHandler(async (req, res) => {
                             image: 1,
                             price: 1,
                             category: 1,
+                            quantity:1,
                         }
                     },
                 ]
